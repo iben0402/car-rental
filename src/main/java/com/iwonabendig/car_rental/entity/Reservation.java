@@ -15,6 +15,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,11 +37,14 @@ public class Reservation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private ReservationStatus status = ReservationStatus.ACTIVE;
 
+    @NotBlank
+    @Size(max = 100)
     @Column(nullable = false, length = 100)
     private String customerName;
 
@@ -46,9 +52,11 @@ public class Reservation {
     @JoinColumn(name = "car_id", nullable = false)
     private Car car;
 
+    @NotNull
     @Column(name = "start_date_time", nullable = false)
     private LocalDateTime startDateTime;
 
+    @NotNull
     @Column(name = "end_date_time", nullable = false)
     private LocalDateTime endDateTime;
 

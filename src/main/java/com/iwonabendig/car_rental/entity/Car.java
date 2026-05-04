@@ -9,6 +9,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,14 +25,21 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "cars")
 public class Car {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CarType carType;
+
+    @NotBlank
+    @Size(max = 20)
     @Column(nullable = false, unique = true, length = 20)
     private String registrationNumber;
+
     @Column(nullable = false)
     private boolean active;
 
