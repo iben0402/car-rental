@@ -1,5 +1,7 @@
 package com.iwonabendig.car_rental.service;
 
+import com.iwonabendig.car_rental.dto.CarSummaryResponse;
+import com.iwonabendig.car_rental.dto.ReservationResponse;
 import com.iwonabendig.car_rental.entity.Car;
 import com.iwonabendig.car_rental.entity.Reservation;
 import com.iwonabendig.car_rental.enums.CarType;
@@ -13,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +26,7 @@ public class ReservationService {
     private final CarRepository carRepository;
     private final ReservationRepository reservationRepository;
 
-    public Reservation reserve(CarType carType, LocalDateTime startDateTime, int numberOfDays, String customerName) {
+    public ReservationResponse reserve(CarType carType, LocalDateTime startDateTime, int numberOfDays, String customerName) {
         if(numberOfDays < 1) throw new InvalidReservationException("Invalid reservation: reservation to short.");
         if(startDateTime.isBefore(LocalDateTime.now())) throw new InvalidReservationException("Invalid reservation: reservation in the past.");
 
@@ -40,12 +44,27 @@ public class ReservationService {
         Car selectedCar = notBookedAvailableCars.get(0);
 
         Reservation reservation = Reservation.builder().car(selectedCar).customerName(customerName).startDateTime(startDateTime).endDateTime(endDateTime).build();
-        return reservationRepository.save(reservation);
+        Reservation saved = reservationRepository.save(reservation);
+        return ReservationResponse.from(saved);
     }
 
     public void cancel(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationNotFoundException(reservationId));
         reservation.cancel();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CarSummaryResponse> findAvailableCars(
+            CarType carType, LocalDateTime startDateTime, int days) {
+        LocalDateTime end = startDateTime.plusDays(days);
+        List<Car> all = carRepository.findByCarTypeAndActiveTrue(carType);
+        Set<Long> bookedIds = new HashSet<>(
+                reservationRepository.findBookedCarIdsByTypeAndWindow(
+                        carType, startDateTime, end));
+        return all.stream()
+                .filter(car -> !bookedIds.contains(car.getId()))
+                .map(CarSummaryResponse::from)
+                .toList();
     }
 }
